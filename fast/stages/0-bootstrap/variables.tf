@@ -380,6 +380,12 @@ variable "workload_identity_providers" {
       issuer_uri = optional(string)
       audiences  = optional(list(string), [])
       jwks_json  = optional(string)
+      okta = optional(object({
+        client_id         = string
+        client_secret     = string
+        organization_name = string
+        auth_server_name  = string
+      }), null)
     }), {})
   }))
   default  = {}
