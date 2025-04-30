@@ -55,6 +55,15 @@ locals {
       principal_branch = "principalSet://iam.googleapis.com/%s/attribute.sub/project_path:%s:ref_type:branch:ref:%s"
       principal_repo   = "principalSet://iam.googleapis.com/%s/attribute.repository/%s"
     }
+
+    # TODO: Add documentation here like the other providers
+    okta = {
+      attribute_mapping = {
+        "google.subject" = "assertion.sub"
+        "attribute.sub"  = "assertion.sub"
+      }
+    }
+
     # https://developer.hashicorp.com/terraform/cloud-docs/workspaces/dynamic-provider-credentials/workload-identity-tokens#token-structure
     terraform = {
       attribute_mapping = {
