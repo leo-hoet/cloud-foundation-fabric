@@ -381,8 +381,6 @@ variable "workload_identity_providers" {
       audiences  = optional(list(string), [])
       jwks_json  = optional(string)
       okta = optional(object({
-        client_id         = string // TODO: Is this neccesary here? Can be a secret manuually implemented
-        client_secret     = string // TODO: Is this neccesary here? Can be a secret manuually implemented
         organization_name = string
         auth_server_name  = string
       }), null)
