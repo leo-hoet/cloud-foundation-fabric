@@ -540,9 +540,9 @@ The variable maps each provider's `issuer` attribute with the definitions in the
 
 Provider key names are used by the `cicd_repositories` variable to configure authentication for CI/CD repositories, and generally from your Terraform code whenever you need to configure IAM access or impersonation for federated identities.
 
-This is a sample configuration of a GitHub and a Gitlab provider. Every parameter is optional.
+This is a sample configuration with GitHub, Gitlab and Okta providers. Every parameter is optional.
 
-The `custom_settings` attributes are used to configure the provider to work with privately managed installations of Github and Gitlab:
+The `custom_settings` attributes are used to configure the provider to work with privately managed installations of Github, Gitlab or customize settings for Okta:
 
 - `issuer_uri` (defaults to the public platforms one if not set)
 - `audience` (defaults to the public URL of the provider if not set, as recommended in the [WIF FAQ section](https://cloud.google.com/iam/docs/best-practices-for-using-workload-identity-federation#provider-audience))
@@ -570,6 +570,17 @@ workload_identity_providers = {
     custom_settings = {
       audiences = ["https://gitlab.fast.example.com"]
       issuer_uri        = "https://gitlab.fast.example.com"
+    }
+  }
+  # Use a private instance of Okta
+  # Specify organization and authorization server name
+  okta-private-sample = {
+    issuer              = "okta"
+    custom_settings = {
+      okta = {
+        organization_name =  "my-org"
+        auth_server_name  =  "my-auth-server"
+      }
     }
   }
 }
