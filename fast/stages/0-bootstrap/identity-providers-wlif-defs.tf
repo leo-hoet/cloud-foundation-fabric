@@ -56,7 +56,7 @@ locals {
       principal_repo   = "principalSet://iam.googleapis.com/%s/attribute.repository/%s"
     }
 
-    # TODO: Add documentation here like the other providers
+    # https://developer.okta.com/docs/api/openapi/okta-oauth/guides/overview/
     okta = {
       attribute_mapping = {
         "google.subject" = "assertion.sub"
