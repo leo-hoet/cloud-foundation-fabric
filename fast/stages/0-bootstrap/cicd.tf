@@ -34,15 +34,16 @@ locals {
     }
   )
   cicd_providers = {
-    for k, v in google_iam_workload_identity_pool_provider.default :
+    # for k, v in google_iam_workload_identity_pool_provider.default :
+    for k in keys(local.cicd_repositories) :
     k => {
       audiences = concat(
-        v.oidc[0].allowed_audiences,
-        ["https://iam.googleapis.com/${v.name}"]
+        google_iam_workload_identity_pool_provider.default[k].oidc[0].allowed_audiences,
+        ["https://iam.googleapis.com/${google_iam_workload_identity_pool_provider.default[k].name}"]
       )
       issuer           = local.workload_identity_providers[k].issuer
-      issuer_uri       = try(v.oidc[0].issuer_uri, null)
-      name             = v.name
+      issuer_uri       = try(google_iam_workload_identity_pool_provider.default[k].oidc[0].issuer_uri, null)
+      name             = google_iam_workload_identity_pool_provider.default[k].name
       principal_branch = local.workload_identity_providers[k].principal_branch
       principal_repo   = local.workload_identity_providers[k].principal_repo
     }
