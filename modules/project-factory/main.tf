@@ -90,10 +90,14 @@ module "projects" {
   ))
   notification_channels = try(each.value.notification_channels, null)
   org_policies          = each.value.org_policies
-  service_encryption_key_ids = merge(
-    each.value.service_encryption_key_ids,
-    var.data_merges.service_encryption_key_ids
-  )
+  service_encryption_key_ids = {
+    for k, v in merge(
+      each.value.service_encryption_key_ids,
+      var.data_merges.service_encryption_key_ids
+      ) : k => [
+      for key in v : lookup(var.factories_config.context.kms_keys, key, key)
+    ]
+  }
   services = distinct(concat(
     each.value.services,
     var.data_merges.services
@@ -132,7 +136,8 @@ module "projects-iam" {
     }
   }
   iam = {
-    for k, v in lookup(each.value, "iam", {}) : k => [
+    for k, v in lookup(each.value, "iam", {}) :
+    lookup(var.factories_config.context.custom_roles, k, k) => [
       for vv in v : try(
         # project service accounts (sa)
         module.service-accounts["${each.key}/${vv}"].iam_email,
@@ -150,7 +155,9 @@ module "projects-iam" {
         # passthrough + error handling using tonumber until Terraform gets fail/raise function
         (
           strcontains(vv, ":")
-          ? vv
+          ? templatestring(
+            vv, { project_number = module.projects[each.key].number }
+          )
           : tonumber("[Error] Invalid member: '${vv}' in project '${each.key}'")
         )
       )
@@ -171,15 +178,19 @@ module "projects-iam" {
           # other automation service account (project/automation/rw)
           local.context.iam_principals[vv],
           # project's service identities
-          local.service_agents_email[each.key][vv],
+          local.service_agents_email["${each.key}/${vv}"],
+          local.service_agents_email[vv],
           # passthrough + error handling using tonumber until Terraform gets fail/raise function
           (
             strcontains(vv, ":")
-            ? vv
+            ? templatestring(
+              vv, { project_number = module.projects[each.key].number }
+            )
             : tonumber("[Error] Invalid member: '${vv}' in project '${each.key}'")
           )
         )
       ]
+      role = lookup(var.factories_config.context.custom_roles, v.role, v.role)
     })
   }
   iam_bindings_additive = {
@@ -196,14 +207,18 @@ module "projects-iam" {
         # other automation service account (project/automation/rw)
         local.context.iam_principals[v.member],
         # project's service identities
-        local.service_agents_email[each.key][v.member],
+        local.service_agents_email["${each.key}/${v.member}"],
+        local.service_agents_email[v.member],
         # passthrough + error handling using tonumber until Terraform gets fail/raise function
         (
           strcontains(v.member, ":")
-          ? v.member
+          ? templatestring(
+            v.member, { project_number = module.projects[each.key].number }
+          )
           : tonumber("[Error] Invalid member: '${v.member}' in project '${each.key}'")
         )
       )
+      role = lookup(var.factories_config.context.custom_roles, v.role, v.role)
     })
   }
   # IAM by principals would trigger dynamic key errors so we don't interpolate
@@ -224,16 +239,17 @@ module "projects-iam" {
       # passthrough + error handling using tonumber until Terraform gets fail/raise function
       (
         strcontains(k, ":")
-        ? k
+        ? templatestring(
+          k, { project_number = module.projects[each.key].number }
+        )
         : tonumber("[Error] Invalid member: '${k}' in project '${each.key}'")
       )
-    ) => v
+      ) => [
+      for vv in v : lookup(var.factories_config.context.custom_roles, vv, vv)
+    ]
   }
   # Shared VPC configuration is done at stage 2, to avoid dependency cycle between project service accounts and
   # IAM grants done for those service accounts
-  factories_config = {
-    custom_roles = each.value.factories_config.custom_roles
-  }
   shared_vpc_service_config = (
     try(each.value.shared_vpc_service_config.host_project, null) == null
     ? null
@@ -243,6 +259,34 @@ module "projects-iam" {
         module.projects[each.value.shared_vpc_service_config.host_project].project_id,
         each.value.shared_vpc_service_config.host_project
       )
+      iam_bindings_additive = {
+        for k, v in try(each.value.shared_vpc_service_config.iam_bindings_additive, {}) : k => merge(v, {
+          member = try(
+            # project service accounts (sa)
+            module.service-accounts["${each.key}/${v.member}"].iam_email,
+            # automation service account (rw)
+            local.context.iam_principals["${each.key}/automation/${v.member}"],
+            # automation service account (automation/rw)
+            local.context.iam_principals["${each.key}/${v.member}"],
+            # other projects service accounts (project/sa)
+            module.service-accounts[v.member].iam_email,
+            # other automation service account (project/automation/rw)
+            local.context.iam_principals[v.member],
+            # project's service identities
+            local.service_agents_email["${each.key}/${v.member}"],
+            local.service_agents_email[v.member],
+            # passthrough + error handling using tonumber until Terraform gets fail/raise function
+            (
+              strcontains(v.member, ":")
+              ? templatestring(
+                v.member, { project_number = module.projects[each.key].number }
+              )
+              : tonumber("[Error] Invalid member: '${v.member}' in project '${each.key}'")
+            )
+          )
+          role = lookup(var.factories_config.context.custom_roles, v.role, v.role)
+        })
+      }
       network_users = [
         for vv in try(each.value.shared_vpc_service_config.network_users, []) :
         try(
@@ -259,7 +303,9 @@ module "projects-iam" {
           # passthrough + error handling using tonumber until Terraform gets fail/raise function
           (
             strcontains(vv, ":")
-            ? vv
+            ? templatestring(
+              vv, { project_number = module.projects[each.key].number }
+            )
             : tonumber("[Error] Invalid member: '${vv}' in project '${each.key}'")
           )
         )
@@ -282,6 +328,7 @@ module "buckets" {
   prefix         = each.value.prefix
   name           = "${each.value.project_name}-${each.value.name}"
   encryption_key = each.value.encryption_key
+  force_destroy  = each.value.force_destroy
   iam = {
     for k, v in each.value.iam : k => [
       for vv in v : try(
@@ -298,7 +345,9 @@ module "buckets" {
         # passthrough + error handling using tonumber until Terraform gets fail/raise function
         (
           strcontains(vv, ":")
-          ? vv
+          ? templatestring(
+            vv, { project_number = module.projects[each.key].number }
+          )
           : tonumber("[Error] Invalid member: '${vv}' in project '${each.value.project_key}'")
         )
       )
@@ -321,7 +370,9 @@ module "buckets" {
           # passthrough + error handling using tonumber until Terraform gets fail/raise function
           (
             strcontains(vv, ":")
-            ? vv
+            ? templatestring(
+              vv, { project_number = module.projects[each.key].number }
+            )
             : tonumber("[Error] Invalid member: '${vv}' in project '${each.value.project}'")
           )
         )
@@ -344,7 +395,9 @@ module "buckets" {
         # passthrough + error handling using tonumber until Terraform gets fail/raise function
         (
           strcontains(v.member, ":")
-          ? v.member
+          ? templatestring(
+            v.member, { project_number = module.projects[each.key].number }
+          )
           : tonumber("[Error] Invalid member: '${v.member}' in project '${each.value.project}'")
         )
       )
