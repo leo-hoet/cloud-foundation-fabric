@@ -62,6 +62,11 @@ locals {
         "google.subject" = "assertion.sub"
         "attribute.sub"  = "assertion.sub"
       }
+      #TODO CHANGE
+      issuer_uri       = "https://dev-79141417.okta.com/oauth2/default"
+      principal_branch = "principalSet://iam.googleapis.com/%s/attribute.sub/project_path:%s:ref_type:branch:ref:%s"
+      principal_repo   = "principalSet://iam.googleapis.com/%s/attribute.repository/%s"
+      principal_member = "principalSet://iam.googleapis.com/%s/*"
     }
 
     # https://developer.hashicorp.com/terraform/cloud-docs/workspaces/dynamic-provider-credentials/workload-identity-tokens#token-structure
