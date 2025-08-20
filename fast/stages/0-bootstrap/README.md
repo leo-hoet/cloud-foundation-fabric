@@ -585,6 +585,10 @@ workload_identity_providers = {
   }
 }
 ```
+Note when using okta: It's necessary to manually configure the okta server URL in the org policy `workloadIdentityPoolProviders` so it works
+properly. To do so, modify the file `fast/stages/0-bootstrap/data/org-policies-iac/iam.yaml`and add your
+authorization server url in `iam.workloadIdentityPoolProviders`
+
 
 ### Project folders
 
