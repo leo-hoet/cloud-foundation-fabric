@@ -33,7 +33,7 @@ locals {
       }) if v.cicd_config != null
     }
   )
-cicd_providers = {
+  cicd_providers = {
     # for k, v in google_iam_workload_identity_pool_provider.default :
     for k, v in local.cicd_repositories :
     k => {
@@ -80,11 +80,11 @@ module "automation-tf-cicd-sa" {
   prefix       = var.prefix
   iam = {
     "roles/iam.workloadIdentityUser" = [
-      each.value.identity_provider == "okta" ?
+      local.cicd_providers[each.key].issuer == "okta" ?
       format(
-        local.workload_identity_providers_defs[each.value.repository.type].principal_member,
+        local.workload_identity_providers_defs[local.cicd_providers[each.key].issuer].principal_member,
         google_iam_workload_identity_pool.default[0].name,
-      ):
+      ) :
       each.value.repository.branch == null
       ? format(
         local.workload_identity_providers_defs[each.value.repository.type].principal_repo,
@@ -118,11 +118,11 @@ module "automation-tf-cicd-r-sa" {
   prefix       = var.prefix
   iam = {
     "roles/iam.workloadIdentityUser" = [
-      each.value.identity_provider == "okta" ?
+      local.cicd_providers[each.key].issuer == "okta" ?
       format(
-        local.workload_identity_providers_defs[each.value.repository.type].principal_member,
+        local.workload_identity_providers_defs[local.cicd_providers[each.key].issuer].principal_member,
         google_iam_workload_identity_pool.default[0].name,
-      ):
+      ) :
       format(
         local.workload_identity_providers_defs[each.value.repository.type].principal_repo,
         google_iam_workload_identity_pool.default[0].name,
