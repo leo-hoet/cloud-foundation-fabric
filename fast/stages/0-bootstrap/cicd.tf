@@ -34,7 +34,6 @@ locals {
     }
   )
   cicd_providers = {
-    # for k, v in google_iam_workload_identity_pool_provider.default :
     for k, v in local.cicd_repositories :
     k => {
       audiences = concat(
