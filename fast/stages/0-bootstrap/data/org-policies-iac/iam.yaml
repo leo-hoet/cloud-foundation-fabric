@@ -29,4 +29,4 @@ iam.workloadIdentityPoolProviders:
           - https://token.actions.githubusercontent.com
           - https://gitlab.com
           - https://app.terraform.io
-          - https://dev-79141417.okta.com/oauth2/default
+          # - https://ORG_NAME.okta.com/oauth2/default # add your Okta auth server url here

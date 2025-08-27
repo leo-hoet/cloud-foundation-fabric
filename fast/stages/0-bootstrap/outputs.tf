@@ -195,9 +195,6 @@ output "workload_identity_pool" {
     pool = try(
       google_iam_workload_identity_pool.default[0].name, null
     )
-    providers = {
-      for k, v in google_iam_workload_identity_pool_provider.default :
-      k => v.name
-    }
+    providers = local.cicd_providers
   }
 }
