@@ -53,10 +53,15 @@ module "automation-bucket" {
   prefix         = each.value.prefix
   name           = "tf-state"
   encryption_key = lookup(each.value, "encryption_key", null)
-  force_destroy  = lookup(each.value, "force_destroy", null)
+  force_destroy = try(coalesce(
+    var.data_overrides.bucket.force_destroy,
+    each.value.force_destroy,
+    var.data_defaults.bucket.force_destroy,
+  ), null)
   iam = {
     for k, v in lookup(each.value, "iam", {}) : k => [
       for vv in v : try(
+        module.automation-service-accounts["${each.key}/automation/${vv}"].iam_email,
         module.automation-service-accounts["${each.key}/${vv}"].iam_email,
         var.factories_config.context.iam_principals[vv],
         vv
@@ -88,6 +93,7 @@ module "automation-bucket" {
   iam_bindings_additive = {
     for k, v in lookup(each.value, "iam_bindings_additive", {}) : k => merge(v, {
       member = try(
+        module.automation-service-accounts["${each.key}/automation/${v.member}"].iam_email,
         module.automation-service-accounts["${each.key}/${v.member}"].iam_email,
         var.factories_config.context.iam_principals[v.member],
         v.member

@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,12 +13,6 @@
 # limitations under the License.
 
 values:
-  module.cloud_run.google_cloud_run_v2_service_iam_member.default[0]:
-    condition: []
-    location: europe-west8
-    name: hello
-    project: project-id
-    role: roles/run.invoker
   module.cloud_run.google_cloud_run_v2_service.service[0]:
     location: europe-west8
     name: hello
@@ -36,36 +30,29 @@ values:
         execution_environment: EXECUTION_ENVIRONMENT_GEN1
         volumes: []
         vpc_access: []
-  module.cloud_run.google_eventarc_trigger.pubsub_triggers["topic-1"]:
+
+  module.cloud_run.google_eventarc_trigger.storage_triggers["bucket-upload"]:
     destination:
       - cloud_run_service:
-          - path: null
+          - path: /webhook
             region: europe-west8
             service: hello
     location: europe-west8
     matching_criteria:
+      - attribute: bucket
+        operator: ''
+        value: test-my-bucket
       - attribute: type
         operator: ''
-        value: google.cloud.pubsub.topic.v1.messagePublished
-    name: pubsub-topic-1
+        value: google.cloud.storage.object.v1.finalized
+    name: storage-bucket-upload
     project: project-id
-    transport:
-      - pubsub:
-          - topic: topic
-  module.cloud_run.google_service_account.trigger_service_account[0]:
-    account_id: tf-cr-trigger-hello
-    description: null
-    disabled: false
-    display_name: Terraform trigger for Cloud Run hello.
-    project: project-id
-    timeouts: null
+    service_account: fixture-service-account@project-id.iam.gserviceaccount.com
 
 counts:
-  google_cloud_run_v2_service_iam_member: 1
   google_cloud_run_v2_service: 1
   google_eventarc_trigger: 1
-  google_service_account: 1
-  modules: 2
-  resources: 6
+  modules: 3
+  resources: 7
 
 outputs: {}

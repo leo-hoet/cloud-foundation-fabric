@@ -776,7 +776,7 @@ module "project" {
   name   = var.project_id
   project_reuse = {
     use_data_source = false
-    project_attributes = {
+    attributes = {
       name             = var.project_id
       number           = var.project_number
       services_enabled = ["compute.googleapis.com"]
@@ -991,7 +991,7 @@ module "sole-tenancy" {
 | [service_account_email](outputs.tf#L73) | Service account email. |  |
 | [service_account_iam_email](outputs.tf#L78) | Service account email. |  |
 | [template](outputs.tf#L87) | Template resource. |  |
-| [template_name](outputs.tf#L92) | Template name. |  |
+| [template_name](outputs.tf#L96) | Template name. |  |
 
 ## Fixtures
 

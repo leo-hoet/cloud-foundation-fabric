@@ -45,11 +45,11 @@ locals {
       parent        = null
       prefix        = null
       project_reuse = merge({
-        use_data_source    = true
-        project_attributes = null
+        use_data_source = true
+        attributes      = null
         }, try(local._projects_config.data_defaults.project_reuse, {
-          use_data_source    = true
-          project_attributes = null
+          use_data_source = true
+          attributes      = null
         })
       )
       service_encryption_key_ids = {}
@@ -220,8 +220,8 @@ locals {
         try(v.project_reuse, null) != null
         ? merge(
           {
-            use_data_source    = true
-            project_attributes = null
+            use_data_source = true
+            attributes      = null
           },
           v.project_reuse
         )
@@ -302,6 +302,7 @@ locals {
         try(v.logging_data_access, null),
         local.__projects_config.data_defaults.logging_data_access
       )
+      quotas = try(v.quotas, {})
     })
   }
   # tflint-ignore: terraform_unused_declarations

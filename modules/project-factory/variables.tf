@@ -18,6 +18,9 @@ variable "data_defaults" {
   description = "Optional default values used when corresponding project data from files are missing."
   type = object({
     billing_account = optional(string)
+    bucket = optional(object({
+      force_destroy = optional(bool)
+    }), {})
     contacts        = optional(map(list(string)), {})
     deletion_policy = optional(string)
     factories_config = optional(object({
@@ -32,7 +35,7 @@ variable "data_defaults" {
     prefix        = optional(string)
     project_reuse = optional(object({
       use_data_source = optional(bool, true)
-      project_attributes = optional(object({
+      attributes = optional(object({
         name             = string
         number           = number
         services_enabled = optional(list(string), [])
@@ -103,6 +106,9 @@ variable "data_overrides" {
   type = object({
     # data overrides default to null to mark that they should not override
     billing_account = optional(string)
+    bucket = optional(object({
+      force_destroy = optional(bool)
+    }), {})
     contacts        = optional(map(list(string)))
     deletion_policy = optional(string)
     factories_config = optional(object({
@@ -246,6 +252,7 @@ variable "factories_data" {
         bucket = optional(object({
           location                    = string
           description                 = optional(string)
+          force_destroy               = optional(bool)
           prefix                      = optional(string)
           storage_class               = optional(string, "STANDARD")
           uniform_bucket_level_access = optional(bool, true)
@@ -305,6 +312,7 @@ variable "factories_data" {
       buckets = optional(map(object({
         location                    = string
         description                 = optional(string)
+        force_destroy               = optional(bool)
         prefix                      = optional(string)
         storage_class               = optional(string, "STANDARD")
         uniform_bucket_level_access = optional(bool, true)
