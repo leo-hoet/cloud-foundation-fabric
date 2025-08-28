@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,21 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# yaml-language-server: $schema=../../schemas/org-policies.schema.json
-
-iam.automaticIamGrantsForDefaultServiceAccounts:
-  rules:
-    - enforce: true
-
-iam.disableServiceAccountKeyCreation:
-  rules:
-    - enforce: true
-
-iam.workloadIdentityPoolProviders:
-  rules:
-    - allow:
-        values:
-          - https://token.actions.githubusercontent.com
-          - https://gitlab.com
-          - https://app.terraform.io
-          # - https://ORG_NAME.okta.com/oauth2/default # add your Okta auth server url here
+#TBD
+#Okta does not need workflow to work, only keeping this file for consistency across cicd providers.

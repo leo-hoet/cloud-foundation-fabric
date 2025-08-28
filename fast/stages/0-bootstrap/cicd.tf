@@ -34,17 +34,18 @@ locals {
     }
   )
   cicd_providers = {
-    for k, v in google_iam_workload_identity_pool_provider.default :
+    for k, v in local.cicd_repositories :
     k => {
       audiences = concat(
-        v.oidc[0].allowed_audiences,
-        ["https://iam.googleapis.com/${v.name}"]
+        google_iam_workload_identity_pool_provider.default[v.identity_provider].oidc[0].allowed_audiences,
+
+        ["https://iam.googleapis.com/${google_iam_workload_identity_pool_provider.default[v.identity_provider].name}"]
       )
-      issuer           = local.workload_identity_providers[k].issuer
-      issuer_uri       = try(v.oidc[0].issuer_uri, null)
-      name             = v.name
-      principal_branch = local.workload_identity_providers[k].principal_branch
-      principal_repo   = local.workload_identity_providers[k].principal_repo
+      issuer           = local.workload_identity_providers[v.identity_provider].issuer
+      issuer_uri       = try(google_iam_workload_identity_pool_provider.default[v.identity_provider].oidc[0].issuer_uri, null)
+      name             = google_iam_workload_identity_pool_provider.default[v.identity_provider].name
+      principal_branch = local.workload_identity_providers[v.identity_provider].principal_branch
+      principal_repo   = local.workload_identity_providers[v.identity_provider].principal_repo
     }
   }
   cicd_repositories = {
@@ -78,6 +79,11 @@ module "automation-tf-cicd-sa" {
   prefix       = var.prefix
   iam = {
     "roles/iam.workloadIdentityUser" = [
+      local.cicd_providers[each.key].issuer == "okta" ?
+      format(
+        local.workload_identity_providers_defs[local.cicd_providers[each.key].issuer].principal_member,
+        google_iam_workload_identity_pool.default[0].name,
+      ) :
       each.value.repository.branch == null
       ? format(
         local.workload_identity_providers_defs[each.value.repository.type].principal_repo,
@@ -111,6 +117,11 @@ module "automation-tf-cicd-r-sa" {
   prefix       = var.prefix
   iam = {
     "roles/iam.workloadIdentityUser" = [
+      local.cicd_providers[each.key].issuer == "okta" ?
+      format(
+        local.workload_identity_providers_defs[local.cicd_providers[each.key].issuer].principal_member,
+        google_iam_workload_identity_pool.default[0].name,
+      ) :
       format(
         local.workload_identity_providers_defs[each.value.repository.type].principal_repo,
         google_iam_workload_identity_pool.default[0].name,

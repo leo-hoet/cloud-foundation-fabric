@@ -76,10 +76,10 @@ variable "cicd_config" {
     condition = alltrue([
       for k, v in coalesce(var.cicd_config, {}) :
       v == null || (
-        contains(["github", "gitlab", "terraform"], coalesce(try(v.repository.type, null), "null"))
+        contains(["github", "gitlab", "terraform","okta"], coalesce(try(v.repository.type, null), "null"))
       )
     ])
-    error_message = "Invalid repository type, supported types: 'github', 'gitlab', or 'terraform'."
+    error_message = "Invalid repository type, supported types: 'github', 'gitlab', 'terraform' or 'okta'."
   }
 }
 
@@ -381,6 +381,10 @@ variable "workload_identity_providers" {
       issuer_uri = optional(string)
       audiences  = optional(list(string), [])
       jwks_json  = optional(string)
+      okta = optional(object({
+        organization_name = string
+        auth_server_name  = string
+      }), null)
     }), {})
   }))
   default  = {}
