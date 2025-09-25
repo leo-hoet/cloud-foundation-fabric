@@ -76,8 +76,6 @@ iam_by_principals:
     - roles/resourcemanager.folderViewer
     - roles/resourcemanager.tagViewer
     - roles/serviceusage.serviceUsageViewer
-    - $custom_roles:organization_admin_viewer
-    - $custom_roles:tag_viewer
   $iam_principals:service_accounts/iac-0/iac-networking-rw:
     - roles/compute.orgFirewallPolicyAdmin
     - roles/compute.xpnAdmin
@@ -96,7 +94,7 @@ logging:
   # disable_default_log_sink: false
   storage_location: $locations:default
   sinks:
-    audit-logs:
+    audit-logs-dos:
       # description: foo
       # exclusions: {}
       destination: $log_buckets:log-0/audit-logs
@@ -105,13 +103,13 @@ logging:
         log_id("cloudaudit.googleapis.com/system_event") OR
         log_id("cloudaudit.googleapis.com/policy") OR
         log_id("cloudaudit.googleapis.com/access_transparency")
-    iam:
+    iam-dos:
       destination: $log_buckets:log-0/iam
       filter: |
         protoPayload.serviceName="iamcredentials.googleapis.com" OR
         protoPayload.serviceName="iam.googleapis.com" OR
         protoPayload.serviceName="sts.googleapis.com"
-    vpc-sc:
+    vpc-sc-dos:
       destination: $log_buckets:log-0/vpc-sc
       filter: |
         protoPayload.metadata.@type="type.googleapis.com/google.cloud.audit.VpcServiceControlAuditMetadata"
@@ -120,3 +118,94 @@ logging:
 iam:
   # reset default role on new organizations
   roles/billing.creator: []
+  roles/browser: [
+    "group:argolis-multiorg-org-type-owner@twosync.google.com",
+    "group:cloud-gong-hierarchy_management-hm_tool-latchkey-presubmits@twosync-src.google.com",
+    "group:ops-security-incident_tools-cloud-chargeback@twosync-src.google.com",
+    "group:sst-robots@twosync-src.google.com",
+    "mdb:oslo-chp-multiorg-enrichment-clients",
+    "serviceAccount:cloud-environments.google.com@appspot.gserviceaccount.com",
+    "serviceAccount:cloud-gong-multiorg-composite@system.gserviceaccount.com",
+    "serviceAccount:investigation-tools-shim-gcp@system.gserviceaccount.com",
+    "serviceAccount:latchkey-multiorg-ephemeral-custom-automation@system.gserviceaccount.com",
+    "serviceAccount:latchkey-multiorg-ephemeral-iam-automation@system.gserviceaccount.com",
+    "serviceAccount:latchkey-multiorg-ephemeral-iam-deny-automation@system.gserviceaccount.com",
+    "serviceAccount:latchkey-multiorg-ephemeral-org-policy-automation@system.gserviceaccount.com",
+    "serviceAccount:latchkey-multiorg-ephemeral-organization-automation@system.gserviceaccount.com",
+    "user:investigation-tools-shim-gcp@prod.google.com"
+  ]
+  roles/cloudasset.owner: [
+    "group:argolis-gcp-resource-mgmt@twosync.google.com",
+    "serviceAccount:cloud-environments.google.com@appspot.gserviceaccount.com"
+  ]
+  roles/compute.networkViewer: [
+    "group:sst-robots@twosync-src.google.com",
+    "mdb:oslo-chp-multiorg-enrichment-clients",
+    "serviceAccount:investigation-tools-shim-gcp@system.gserviceaccount.com",
+    "user:investigation-tools-shim-gcp@prod.google.com"
+  ]
+  roles/dns.admin : [
+    "group:argolis-gcp-resource-mgmt@twosync.google.com"
+  ]
+  roles/essentialcontacts.admin : [
+    "serviceAccount:cloud-environments.google.com@appspot.gserviceaccount.com"
+  ]
+  roles/iam.denyAdmin: [
+    "serviceAccount:cloud-environments.google.com@appspot.gserviceaccount.com",
+    "serviceAccount:cloud-gong-multiorg-composite@system.gserviceaccount.com",
+    "serviceAccount:latchkey-multiorg-ephemeral-iam-deny-automation@system.gserviceaccount.com"
+  ]
+  roles/iam.securityReviewer : [
+    "group:eip-cloud-multiorg@twosync.google.com",
+    "group:sst-robots@twosync-src.google.com",
+    "mdb:oslo-chp-multiorg-enrichment-clients",
+    "serviceAccount:investigation-tools-shim-gcp@system.gserviceaccount.com",
+    "user:investigation-tools-shim-gcp@prod.google.com"
+  ]
+  roles/iam.serviceAccountKeyAdmin : [
+    "group:ops-security-incident_tools-cloud-chargeback@twosync-src.google.com",
+    "user:ares-cloud-providers-main-prod-jobs@prod.google.com"
+  ]
+  roles/logging.configWriter : [
+    "group:sst-cloud-infra-prod-readwriters@twosync-src.google.com"
+  ]
+  roles/logging.privateLogViewer : [
+    "group:sst-cloud-infra-prod-readers@twosync-src.google.com"
+  ]
+  roles/owner : [
+    "serviceAccount:611923862592@cloudbuild.gserviceaccount.com"
+  ]
+  roles/orgpolicy.policyAdmin : [
+    "serviceAccount:cloud-environments.google.com@appspot.gserviceaccount.com",
+    "serviceAccount:latchkey-multiorg-ephemeral-org-policy-automation@system.gserviceaccount.com",
+    "group:ops-security-incident_tools-cloud-chargeback@twosync-src.google.com",
+    "group:argolis-gcp-resource-mgmt@twosync.google.com",
+    "serviceAccount:611923862592@cloudbuild.gserviceaccount.com"
+  ]
+  roles/resourcemanager.folderAdmin : [
+    "serviceAccount:cloud-environments.google.com@appspot.gserviceaccount.com"
+  ]
+  roles/resourcemanager.folderCreator : [
+    "serviceAccount:611923862592@cloudbuild.gserviceaccount.com"
+  ]
+  roles/resourcemanager.organizationAdmin : [
+    "group:argolis-gcp-resource-mgmt@twosync.google.com",
+    "group:argolis-multiorg-org-type-owner@twosync.google.com",
+    "group:gcp-organization-admins@lhoet.altostrat.com",
+    "serviceAccount:cloud-environments.google.com@appspot.gserviceaccount.com",
+    "serviceAccount:latchkey-multiorg-ephemeral-iam-automation@system.gserviceaccount.com",
+  ]
+  roles/resourcemanager.organizationViewer: [
+    "group:sst-cloud-infra-prod-readers@twosync-src.google.com",
+    "group:sst-cloud-infra-prod-readwriters@twosync-src.google.com"
+  ]
+  roles/resourcemanager.projectCreator : [
+    "serviceAccount:611923862592@cloudbuild.gserviceaccount.com"
+  ]
+  roles/securitycenter.admin : [
+    "serviceAccount:cloud-environments.google.com@appspot.gserviceaccount.com"
+  ]
+  roles/viewer : [
+    "group:ops-security-incident_tools-cloud-chargeback@twosync-src.google.com"
+  ]
+
