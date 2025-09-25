@@ -22,13 +22,14 @@ essentialcontacts.allowedContactDomains:
   rules:
     - allow:
         values:
+          - "@google.com"
           - '@${organization.domain}'
       condition:
         title: Restrict essential contacts domains
         expression: |
           !resource.matchTag('${organization.id}/org-policies', 'allowed-essential-contacts-domains-all')
     - allow:
-        all: true
+        all: TRUE
       condition:
         title: Allow essential contacts from any domain
         expression: |

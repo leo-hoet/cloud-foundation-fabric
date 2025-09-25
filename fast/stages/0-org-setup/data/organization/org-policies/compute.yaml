@@ -84,6 +84,8 @@ compute.trustedImageProjects:
         - "is:projects/gke-node-images"
         - "is:projects/gke-windows-node-images"
         - "is:projects/ubuntu-os-gke-cloud"
+        - "is:projects/rocky-linux-accelerator-cloud"
+        - "is:projects/ubuntu-os-accelerator-images"
 
 
 compute.vmExternalIpAccess:
@@ -100,15 +102,15 @@ compute.vmExternalIpAccess:
 #   - deny:
 #       all: true
 
-# compute.restrictDedicatedInterconnectUsage:
-#   rules:
-#   - deny:
-#       all: true
+compute.restrictDedicatedInterconnectUsage:
+  rules:
+  - deny:
+      all: true
 
-# compute.restrictPartnerInterconnectUsage:
-#   rules:
-#   - deny:
-#       all: true
+compute.restrictPartnerInterconnectUsage:
+  rules:
+  - deny:
+      all: true
 
 compute.restrictProtocolForwardingCreationForTypes:
   rules:
@@ -126,21 +128,23 @@ compute.restrictProtocolForwardingCreationForTypes:
 #   - deny:
 #       all: true
 
-# compute.restrictVpcPeering:
-#   rules:
-#   - deny:
-#       all: true
+compute.restrictVpcPeering:
+  rules:
+    - allow:
+        values:
+          - under:folders/819246910528
+          - under:organizations/794366770955 
 
-# compute.restrictVpnPeerIPs:
-#   rules:
-#   - deny:
-#       all: true
+compute.restrictVpnPeerIPs:
+  rules:
+  - deny:
+      all: true
 
 # compute.restrictXpnProjectLienRemoval:
 #   rules:
 #   - enforce: true
 
-# compute.vmCanIpForward:
-#   rules:
-#   - deny:
-#       all: true
+compute.vmCanIpForward:
+  rules:
+  - deny:
+      all: true
