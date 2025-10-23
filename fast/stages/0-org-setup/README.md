@@ -1,6 +1,7 @@
 <img width="1392" height="541" alt="image" src="https://github.com/user-attachments/assets/786ffd8d-e354-4419-93a7-46994ca80f91" /># FAST Organization Setup
 
 <!-- BEGIN TOC -->
+
 - [Quickstart](#quickstart)
   - [Prerequisites](#prerequisites)
   - [Select/configure a factory dataset](#selectconfigure-a-factory-dataset)
@@ -49,7 +50,7 @@ The high-level flow for running this stage is:
 
 - ensure all **pre-requisites** are in place, and identify at least one GCP organization admin principal (ideally a group)
 - select the **factory data set** for the factories among those available - populate the **defaults file** with attributes matching your configuration (organization id, billing account, etc.)
-(`data`, `data-minimal`, etc.) or edit/create your own
+  (`data`, `data-minimal`, etc.) or edit/create your own
 - assign a set of **initial IAM roles** to the admin principal
 - run a **first init/apply cycle** using user credentials
 - copy the generated provider file, **migrate state**, then run a second init/apply cycle using service account impersonated credentials
@@ -597,6 +598,71 @@ workflows:
       plan: $iam_principals:service_accounts/iac-0/iac-org-cicd-ro
 ```
 
+#### Okta
+
+Okta is a special case, since it's an identity provider but does not have the ability to manage
+repositories.
+
+To use Okta as a workload identity provider, define it as in the following example:
+
+```yaml
+workload_identity_federation:
+  pool_name: iac-0
+  project: $project_ids:iac-0
+  providers:
+    okta:
+      issuer: okta
+      provider_id: okta
+      custom_settings:
+        audiences:
+          - my_custom_audience  // Change this
+        okta:
+          auth_server_name: my_auth_sv_name // Change this
+          organization_name: <REPLACE_WITH_ORG_NAME>.okta.com // Change this
+workflows:
+  org-setup:
+    template: okta
+    workload_identity_provider:
+      id: $wif_providers:okta
+      audiences: []
+    output_files:
+      storage_bucket: $storage_buckets:iac-0/iac-outputs
+      providers:
+        apply: $output_files:providers/0-org-setup
+        plan: $output_files:providers/0-org-setup-ro
+      files:
+        - 0-org-setup.auto.tfvars.json
+    service_accounts:
+      apply: $iam_principals:service_accounts/iac-0/iac-org-cicd-rw
+      plan: $iam_principals:service_accounts/iac-0/iac-org-cicd-ro
+```
+
+Also you will need to modify the following org policies and iam permissions in `iac-0.yaml`:
+
+- Under `org_polices` :
+
+```yaml
+org_policies:
+  iam.workloadIdentityPoolProviders:
+    rules:
+      - allow:
+          values:
+            - https://token.actions.githubusercontent.com
+            - https://gitlab.com
+            - https://app.terraform.io
+            - https://<REPLACE_WITH_ORG_NAME>.okta.com/oauth2/default
+```
+
+- iam:
+  roles/iam.workloadIdentityUser: - principalSet://iam.googleapis.com/projects/278174100537/locations/global/workloadIdentityPools/iac-0/\*
+
+- iam:
+  roles/iam.workloadIdentityUser:
+
+  - principalSet://iam.googleapis.com/projects/278174100537/locations/global/workloadIdentityPools/iac-0/\*
+
+-
+
 ## Leveraging classic FAST Stages
 
 Classic Fast stage 2 and 3 can be directly used after applying this if the [Classic FAST layout](#classic-fast-dataset) is used, or similar identities and permissions are implemented in a different design.
@@ -626,35 +692,37 @@ Define values for the `var.environments` variable in a tfvars file.
 
 <!-- TFDOC OPTS files:1 -->
 <!-- BEGIN TFDOC -->
+
 ## Files
 
-| name | description | modules | resources |
-|---|---|---|---|
-| [billing.tf](./billing.tf) | None | <code>billing-account</code> |  |
-| [cicd.tf](./cicd.tf) | None |  | <code>google_iam_workload_identity_pool</code> · <code>google_iam_workload_identity_pool_provider</code> · <code>google_storage_bucket_object</code> · <code>local_file</code> |
-| [factory.tf](./factory.tf) | None | <code>project-factory</code> |  |
-| [imports.tf](./imports.tf) | None |  |  |
-| [main.tf](./main.tf) | Module-level locals and resources. |  | <code>terraform_data</code> |
-| [organization.tf](./organization.tf) | None | <code>organization</code> |  |
-| [output-files.tf](./output-files.tf) | None |  | <code>google_storage_bucket_object</code> · <code>local_file</code> |
-| [outputs.tf](./outputs.tf) | Module outputs. |  |  |
-| [variables.tf](./variables.tf) | Module variables. |  |  |
-| [wif-definitions.tf](./wif-definitions.tf) | Workload Identity provider definitions. |  |  |
+| name                                       | description                             | modules                      | resources                                                                                                                                                                      |
+| ------------------------------------------ | --------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [billing.tf](./billing.tf)                 | None                                    | <code>billing-account</code> |                                                                                                                                                                                |
+| [cicd.tf](./cicd.tf)                       | None                                    |                              | <code>google_iam_workload_identity_pool</code> · <code>google_iam_workload_identity_pool_provider</code> · <code>google_storage_bucket_object</code> · <code>local_file</code> |
+| [factory.tf](./factory.tf)                 | None                                    | <code>project-factory</code> |                                                                                                                                                                                |
+| [imports.tf](./imports.tf)                 | None                                    |                              |                                                                                                                                                                                |
+| [main.tf](./main.tf)                       | Module-level locals and resources.      |                              | <code>terraform_data</code>                                                                                                                                                    |
+| [organization.tf](./organization.tf)       | None                                    | <code>organization</code>    |                                                                                                                                                                                |
+| [output-files.tf](./output-files.tf)       | None                                    |                              | <code>google_storage_bucket_object</code> · <code>local_file</code>                                                                                                            |
+| [outputs.tf](./outputs.tf)                 | Module outputs.                         |                              |                                                                                                                                                                                |
+| [variables.tf](./variables.tf)             | Module variables.                       |                              |                                                                                                                                                                                |
+| [wif-definitions.tf](./wif-definitions.tf) | Workload Identity provider definitions. |                              |                                                                                                                                                                                |
 
 ## Variables
 
-| name | description | type | required | default |
-|---|---|:---:|:---:|:---:|
-| [context](variables.tf#L17) | Context-specific interpolations. | <code title="object&#40;&#123;&#10;  custom_roles          &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  folder_ids            &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  iam_principals        &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  locations             &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  kms_keys              &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  notification_channels &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  project_ids           &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  service_account_ids   &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  tag_keys              &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  tag_values            &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  vpc_host_projects     &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  vpc_sc_perimeters     &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;&#125;&#41;">object&#40;&#123;&#8230;&#125;&#41;</code> |  | <code>&#123;&#125;</code> |
-| [factories_config](variables.tf#L37) | Configuration for the resource factories or external data. | <code title="object&#40;&#123;&#10;  billing_accounts  &#61; optional&#40;string, &#34;data&#47;billing-accounts&#34;&#41;&#10;  cicd              &#61; optional&#40;string&#41;&#10;  defaults          &#61; optional&#40;string, &#34;data&#47;defaults.yaml&#34;&#41;&#10;  folders           &#61; optional&#40;string, &#34;data&#47;folders&#34;&#41;&#10;  organization      &#61; optional&#40;string, &#34;data&#47;organization&#34;&#41;&#10;  project_templates &#61; optional&#40;string, &#34;data&#47;templates&#34;&#41;&#10;  projects          &#61; optional&#40;string, &#34;data&#47;projects&#34;&#41;&#10;&#125;&#41;">object&#40;&#123;&#8230;&#125;&#41;</code> |  | <code>&#123;&#125;</code> |
-| [org_policies_imports](variables.tf#L52) | List of org policies to import. These need to also be defined in data files. | <code>list&#40;string&#41;</code> |  | <code>&#91;&#93;</code> |
+| name                                     | description                                                                  |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | required |          default          |
+| ---------------------------------------- | ---------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :------: | :-----------------------: |
+| [context](variables.tf#L17)              | Context-specific interpolations.                                             | <code title="object&#40;&#123;&#10;  custom_roles          &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  folder_ids            &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  iam_principals        &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  locations             &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  kms_keys              &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  notification_channels &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  project_ids           &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  service_account_ids   &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  tag_keys              &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  tag_values            &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  vpc_host_projects     &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;  vpc_sc_perimeters     &#61; optional&#40;map&#40;string&#41;, &#123;&#125;&#41;&#10;&#125;&#41;">object&#40;&#123;&#8230;&#125;&#41;</code> |          | <code>&#123;&#125;</code> |
+| [factories_config](variables.tf#L37)     | Configuration for the resource factories or external data.                   |                                                                                                                                                                                                                                     <code title="object&#40;&#123;&#10;  billing_accounts  &#61; optional&#40;string, &#34;data&#47;billing-accounts&#34;&#41;&#10;  cicd              &#61; optional&#40;string&#41;&#10;  defaults          &#61; optional&#40;string, &#34;data&#47;defaults.yaml&#34;&#41;&#10;  folders           &#61; optional&#40;string, &#34;data&#47;folders&#34;&#41;&#10;  organization      &#61; optional&#40;string, &#34;data&#47;organization&#34;&#41;&#10;  project_templates &#61; optional&#40;string, &#34;data&#47;templates&#34;&#41;&#10;  projects          &#61; optional&#40;string, &#34;data&#47;projects&#34;&#41;&#10;&#125;&#41;">object&#40;&#123;&#8230;&#125;&#41;</code>                                                                                                                                                                                                                                     |          | <code>&#123;&#125;</code> |
+| [org_policies_imports](variables.tf#L52) | List of org policies to import. These need to also be defined in data files. |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <code>list&#40;string&#41;</code>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |          |  <code>&#91;&#93;</code>  |
 
 ## Outputs
 
-| name | description | sensitive |
-|---|---|:---:|
-| [iam_principals](outputs.tf#L17) | IAM principals. |  |
-| [locations](outputs.tf#L22) | Default locations. |  |
-| [projects](outputs.tf#L27) | Attributes for managed projects. |  |
-| [tfvars](outputs.tf#L32) | Stage tfvars. | ✓ |
+| name                             | description                      | sensitive |
+| -------------------------------- | -------------------------------- | :-------: |
+| [iam_principals](outputs.tf#L17) | IAM principals.                  |           |
+| [locations](outputs.tf#L22)      | Default locations.               |           |
+| [projects](outputs.tf#L27)       | Attributes for managed projects. |           |
+| [tfvars](outputs.tf#L32)         | Stage tfvars.                    |     ✓     |
+
 <!-- END TFDOC -->
