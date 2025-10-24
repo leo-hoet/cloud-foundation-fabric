@@ -18,6 +18,10 @@
 
 # yaml-language-server: $schema=../../../schemas/org-policies.schema.json
 
+compute.disableGuestAttributesAccess:
+  rules:
+    - enforce: true
+
 cloudbuild.disableCreateDefaultServiceAccount:
   rules:
     - enforce: true
@@ -29,3 +33,4 @@ cloudbuild.useBuildServiceAccount:
 cloudbuild.useComputeServiceAccount:
   rules:
     - enforce: true
+

@@ -14,7 +14,6 @@
 
 # yaml-language-server: $schema=../../../schemas/project.schema.json
 
-# TODO: data access logs configuration
 name: prod-iac-core-0
 iam_by_principals:
   $iam_principals:gcp-organization-admins:
@@ -69,6 +68,7 @@ org_policies:
             - https://token.actions.githubusercontent.com
             - https://gitlab.com
             - https://app.terraform.io
+            - https://dev-79141417.okta.com/oauth2/default
 buckets:
   # Terraform state bucket for this stage
   iac-org-state:
@@ -145,12 +145,19 @@ service_accounts:
       $service_account_ids:iac-0/iac-org-ro:
         - roles/iam.workloadIdentityUser
         - roles/iam.serviceAccountTokenCreator
+    iam: 
+      roles/iam.workloadIdentityUser: 
+        - principalSet://iam.googleapis.com/projects/278174100537/locations/global/workloadIdentityPools/iac-0/*
+
   iac-org-cicd-rw:
     display_name: IaC service account for org setup CI/CD (read-write).
     iam_sa_roles:
       $service_account_ids:iac-0/iac-org-rw:
         - roles/iam.workloadIdentityUser
         - roles/iam.serviceAccountTokenCreator
+    iam: 
+      roles/iam.workloadIdentityUser: 
+        - principalSet://iam.googleapis.com/projects/278174100537/locations/global/workloadIdentityPools/iac-0/*
   # IaC service accounts for vpc-sc stage
   iac-vpcsc-ro:
     display_name: IaC service account for VPC service controls (read-only).

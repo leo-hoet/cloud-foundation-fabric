@@ -47,6 +47,18 @@
                     },
                     "jwks_json_path": {
                       "type": "string"
+                    },
+                    "okta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "organization_name": {
+                          "type": "string"
+                        },
+                        "auth_server_name": {
+                          "type": "string"
+                        }
+                      }
                     }
                   }
                 },
@@ -55,7 +67,8 @@
                   "enum": [
                     "github",
                     "gitlab",
-                    "terraform"
+                    "terraform",
+                    "okta"
                   ]
                 },
                 "provider_id": {
@@ -74,7 +87,7 @@
         "^[a-z-][a-z0-9-]+$": {
           "type": "object",
           "additionalProperties": false,
-          "minProperties": 5,
+          "minProperties": 3,
           "properties": {
             "output_files": {
               "type": "object",
@@ -142,7 +155,8 @@
               "type": "string",
               "enum": [
                 "github",
-                "gitlab"
+                "gitlab",
+                "okta"
               ]
             },
             "workload_identity_provider": {

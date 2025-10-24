@@ -1,0 +1,35 @@
+appengine.disableCodeDownload:
+  rules:
+    - enforce: true
+
+compute.requireShieldedVm:
+  rules:
+    - enforce: true
+
+compute.storageResourceUseRestrictions:
+  # rules:
+  #   - enforce: true
+  rules:
+    - allow:
+        values:
+          - under:organizations/794366770955
+          - under:folders/77620796932
+
+# we should annotate how we came up with these values
+# seeing the output of terraform and writing that here
+iam.allowServiceAccountCredentialLifetimeExtension:
+  rules:
+  - deny:
+      all: true
+
+resourcemanager.allowedExportDestinations:
+  rules:
+  - deny:
+      all: true
+
+iam.serviceAccountKeyExpiryHours:
+  rules:
+    - allow:
+        values:
+          - is:2160h 
+

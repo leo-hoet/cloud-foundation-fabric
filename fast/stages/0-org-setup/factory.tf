@@ -24,7 +24,6 @@ locals {
     try(local.project_defaults.overrides.parent, null) != null
   ) ? {} : { parent = "organizations/${local.organization_id}" }
 }
-
 module "factory" {
   source = "../../../modules/project-factory"
   data_defaults = merge(

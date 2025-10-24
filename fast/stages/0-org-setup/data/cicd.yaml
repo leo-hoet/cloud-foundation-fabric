@@ -18,23 +18,23 @@ workload_identity_federation:
   pool_name: iac-0
   project: $project_ids:iac-0
   providers:
-    github:
+    okta:
       # the condition is optional but recommented, use your GitHub org name
-      attribute_condition: attribute.repository_owner=="my_org"
-      issuer: github
-      # custom_settings:
-      #   issuer_uri:
-      #   audiences: []
-      #   jwks_json_path:
+      # attribute_condition: attribute.repository_owner=="my_org"
+      issuer: okta
+      provider_id: okta
+      custom_settings:
+        audiences:
+          - uno
+        okta:
+          auth_server_name: default 
+          organization_name: dev-79141417.okta.com
 workflows:
   org-setup:
-    template: github
+    template: okta
     workload_identity_provider:
-      id: $wif_providers:github
+      id: $wif_providers:okta
       audiences: []
-    repository:
-      name: org-setup
-      branch: main
     output_files:
       storage_bucket: $storage_buckets:iac-0/iac-outputs
       providers:
