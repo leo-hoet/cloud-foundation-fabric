@@ -600,10 +600,7 @@ workflows:
 
 #### Okta
 
-Okta is a special case, since it's an identity provider but does not have the ability to manage
-repositories.
-
-To use Okta as a workload identity provider, define it as in the following example:
+Okta is a special case. Unlike providers such as GitHub or GitLab, it's an identity provider that doesn't manage repositories. To use Okta as a Workload Identity provider, configure it in your `data/cicd.yaml` file as shown in the following example:
 
 ```yaml
 workload_identity_federation:
@@ -615,10 +612,10 @@ workload_identity_federation:
       provider_id: okta
       custom_settings:
         audiences:
-          - my_custom_audience  // Change this
+          - <REPLACE_WITH_CUSTOM_AUDIENCE>   // Modify this
         okta:
-          auth_server_name: my_auth_sv_name // Change this
-          organization_name: <REPLACE_WITH_ORG_NAME>.okta.com // Change this
+          auth_server_name: <REPLACE_WITH_SERVER_NAME>   // Modify this
+          organization_name: <REPLACE_WITH_ORG_NAME>.okta.com   // Modify this
 workflows:
   org-setup:
     template: okta
@@ -637,9 +634,9 @@ workflows:
       plan: $iam_principals:service_accounts/iac-0/iac-org-cicd-ro
 ```
 
-Also you will need to modify the following org policies and iam permissions in `iac-0.yaml`:
+Finally you will need to modify the following org policies and IAM permissions in `org-policies/iac-0.yaml` file: 
 
-- Under `org_polices` :
+- Under `org_polices` add your Okta provider URL :
 
 ```yaml
 org_policies:
@@ -650,18 +647,36 @@ org_policies:
             - https://token.actions.githubusercontent.com
             - https://gitlab.com
             - https://app.terraform.io
-            - https://<REPLACE_WITH_ORG_NAME>.okta.com/oauth2/default
+            - https://<REPLACE_WITH_ORG_NAME>.okta.com/oauth2/default   // Modify this
 ```
+This configuration adds Okta to the list of allowed Workload Identity providers in your GCP organization.
 
-- iam:
-  roles/iam.workloadIdentityUser: - principalSet://iam.googleapis.com/projects/278174100537/locations/global/workloadIdentityPools/iac-0/\*
+- Under `iac-org-cicd-ro` and `iac-org-cicd-rw` service accounts add `roles/iam.workloadIdentityUser` to each of them:
 
-- iam:
-  roles/iam.workloadIdentityUser:
 
-  - principalSet://iam.googleapis.com/projects/278174100537/locations/global/workloadIdentityPools/iac-0/\*
+```yaml
+  iac-org-cicd-ro:
+    display_name: IaC service account for org setup CI/CD (read-only).
+    iam_sa_roles:
+      $service_account_ids:iac-0/iac-org-ro:
+        - roles/iam.workloadIdentityUser
+        - roles/iam.serviceAccountTokenCreator
+    iam: 
+      roles/iam.workloadIdentityUser: 
+        - principalSet://iam.googleapis.com/projects/<REPLACE_WITH_IAC_PROJECT_NUMBER>/locations/global/workloadIdentityPools/iac-0/*    // Modify this
 
--
+  iac-org-cicd-rw:
+    display_name: IaC service account for org setup CI/CD (read-write).
+    iam_sa_roles:
+      $service_account_ids:iac-0/iac-org-rw:
+        - roles/iam.workloadIdentityUser
+        - roles/iam.serviceAccountTokenCreator
+    iam: 
+      roles/iam.workloadIdentityUser: 
+        - principalSet://iam.googleapis.com/projects/<REPLACE_WITH_IAC_PROJECT_NUMBER>/locations/global/workloadIdentityPools/iac-0/*    // Modify this
+```
+This allows identities from the Workload Identity Pool to impersonate both IaC service accounts.
+
 
 ## Leveraging classic FAST Stages
 
