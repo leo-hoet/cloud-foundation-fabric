@@ -600,6 +600,8 @@ workflows:
 
 #### Okta
 
+<details>
+<summary>Configure Okta as  Workload Identity provider</summary>
 Okta is a special case. Unlike providers such as GitHub or GitLab, it's an identity provider that doesn't manage repositories. To use Okta as a Workload Identity provider, configure it in your `data/cicd.yaml` file as shown in the following example:
 
 ```yaml
@@ -676,7 +678,7 @@ This configuration adds Okta to the list of allowed Workload Identity providers 
         - principalSet://iam.googleapis.com/projects/<REPLACE_WITH_IAC_PROJECT_NUMBER>/locations/global/workloadIdentityPools/iac-0/*    // Modify this
 ```
 This allows identities from the Workload Identity Pool to impersonate both IaC service accounts.
-
+</details>
 
 ## Leveraging classic FAST Stages
 
